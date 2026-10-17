@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tarik Tambang Edukatif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #111827;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            width: 100vw;
+            height: 56.25vw;
+            max-height: 100vh;
+            max-width: 177.78vh;
+            margin: auto;
+            background-color: #f0fdf4;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        #portrait-warning { display: none; }
+        @media screen and (orientation: portrait) {
+            .game-container { display: none !important; }
+            #portrait-warning { 
+                display: flex !important; 
+                flex-direction: column; 
+                justify-content: center; 
+                align-items: center; 
+                position: fixed; 
+                inset: 0; 
+                background: #f0fdf4; 
+                z-index: 9999; 
+                text-align: center;
+                padding: 2rem;
+            }
+        }
+        
+        .rope-container { position: relative; width: 100%; background-color: #87CEEB; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -5px 15px rgba(0,0,0,0.1); border-bottom: 6px solid #4ade80; }
+        .rope { position: absolute; width: 120%; height: 2vh; background-color: #d97706; border-top: 3px solid #f59e0b; border-bottom: 3px solid #b45309; z-index: 10; top: 65%; transform: translateY(-50%); transition: transform 0.3s ease-in-out; }
+        .rope::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.15) 5px, rgba(0,0,0,0.15) 10px); }
+        .ribbon { position: absolute; width: 2vw; max-width: 24px; height: 10vh; max-height: 70px; background-color: #ef4444; top: 65%; left: 50%; transform: translate(-50%, -50%); z-index: 20; border-radius: 4px; box-shadow: 2px 2px 6px rgba(0,0,0,0.4); transition: left 0.3s ease-in-out; border: 2px solid #991b1b; }
+        
+        .team-avatar { position: absolute; z-index: 30; top: 65%; transform: translateY(-50%); transition: left 0.3s ease, right 0.3s ease, transform 0.3s ease; height: clamp(60px, 20vh, 150px); display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        .team-a-avatar { left: 15%; }
+        .team-b-avatar { right: 15%; transform: translateY(-50%) scaleX(-1); }
+        
+        .victory-line { position: absolute; width: 8px; height: 100%; top: 0; z-index: 5; background: repeating-linear-gradient(to bottom, #fff, #fff 10px, #ef4444 10px, #ef4444 20px); border: 2px solid rgba(0,0,0,0.2); }
+        .victory-line-a { left: 10%; }
+        .victory-line-b { right: 10%; }
+        
+        @keyframes struggle-svg {
+            0% { transform: rotate(0deg) scale(1) translateX(0); }
+            25% { transform: rotate(-2deg) scale(1.02) translateX(-3px) translateY(2px); }
+            75% { transform: rotate(1deg) scale(0.98) translateX(2px) translateY(-1px); }
+            100% { transform: rotate(0deg) scale(1) translateX(0); }
+        }
+        .struggle-anim { animation: struggle-svg 0.6s infinite ease-in-out; }
+        .pull-anim { animation: pull-glow 0.5s ease; }
+        @keyframes pull-glow { 50% { filter: drop-shadow(0 0 15px rgba(74, 222, 128, 0.9)) brightness(1.2); } }
+        .shake-anim { animation: shake-margin 0.4s ease; }
+        @keyframes shake-margin { 0%, 100% { margin-left: 0; filter: grayscale(0); } 25%, 75% { margin-left: -15px; filter: grayscale(0.5); } 50% { margin-left: 15px; } }
+        
+        .win-anim { animation: win-blink 0.8s infinite alternate ease-in-out; }
+        @keyframes win-blink { 
+            0% { filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.5)) brightness(1); } 
+            100% { filter: drop-shadow(0 0 35px rgba(250, 204, 21, 1)) brightness(1.3); } 
+        }
+        .lose-anim { animation: lose-shake 0.4s infinite ease-in-out; filter: grayscale(0.8) opacity(0.7); }
+        @keyframes lose-shake { 
+            0%, 100% { margin-left: 0; margin-top: 0; } 
+            25% { margin-left: -8px; margin-top: 3px; } 
+            75% { margin-left: 8px; margin-top: -3px; } 
+        }
+        
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.4); }
+    </style>
+</head>
+<body>
+
+    <div id="portrait-warning">
+        <div class="text-7xl mb-6 animate-bounce">🔄</div>
+        <h2 class="text-3xl font-black text-green-800 mb-4">Putar HP Anda!</h2>
+        <p class="text-gray-600 text-xl font-medium max-w-md leading-relaxed">
+            Aplikasi game ini didesain secara khusus untuk tampilan mendatar (Landscape).
+        </p>
+    </div>
+
+    <svg style="display:none;">
+        <defs>
+            <g id="kid-red">
+                <path d="M 35 85 L 10 115" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 35 85 L 60 115" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 20 45 L 35 85" stroke="#ef4444" stroke-width="28" stroke-linecap="round"/>
+                <circle cx="15" cy="25" r="22" fill="#fde047"/>
+                <path d="M -10 18 Q 15 8 32 22" stroke="white" stroke-width="8" fill="none"/>
+                <path d="M -10 18 Q 5 12 15 16" stroke="#ef4444" stroke-width="8" fill="none"/>
+                <path d="M -10 18 L -20 12 M -10 18 L -15 28" stroke="#ef4444" stroke-width="5" stroke-linecap="round"/>
+                <path d="M 20 50 L 75 65" stroke="#fde047" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 20 20 L 28 23 M 36 20 L 28 23" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M 25 30 Q 28 26 31 30" stroke="#374151" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <circle cx="23" cy="26" r="1.5" fill="#374151"/> <circle cx="33" cy="26" r="1.5" fill="#374151"/>
+                <path d="M 0 5 Q -6 12 0 18 Q 6 12 0 5" fill="#38bdf8"/>
+                <path d="M 35 0 Q 29 7 35 13 Q 41 7 35 0" fill="#38bdf8"/>
+            </g>
+            <g id="kid-blue">
+                <path d="M 35 85 L 10 115" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 35 85 L 60 115" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 20 45 L 35 85" stroke="#3b82f6" stroke-width="28" stroke-linecap="round"/>
+                <circle cx="15" cy="25" r="22" fill="#fde047"/>
+                <path d="M -10 18 Q 15 8 32 22" stroke="white" stroke-width="8" fill="none"/>
+                <path d="M -10 18 Q 5 12 15 16" stroke="#3b82f6" stroke-width="8" fill="none"/>
+                <path d="M -10 18 L -20 12 M -10 18 L -15 28" stroke="#3b82f6" stroke-width="5" stroke-linecap="round"/>
+                <path d="M 20 50 L 75 65" stroke="#fde047" stroke-width="10" stroke-linecap="round"/>
+                <path d="M 20 20 L 28 23 M 36 20 L 28 23" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M 25 30 Q 28 26 31 30" stroke="#374151" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <circle cx="23" cy="26" r="1.5" fill="#374151"/> <circle cx="33" cy="26" r="1.5" fill="#374151"/>
+                <path d="M 0 5 Q -6 12 0 18 Q 6 12 0 5" fill="#38bdf8"/>
+                <path d="M 35 0 Q 29 7 35 13 Q 41 7 35 0" fill="#38bdf8"/>
+            </g>
+            <linearGradient id="sky-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#38bdf8"/>
+                <stop offset="100%" stop-color="#e0f2fe"/>
+            </linearGradient>
+            <linearGradient id="grass-grad1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#84cc16"/>
+                <stop offset="100%" stop-color="#4d7c0f"/>
+            </linearGradient>
+            <pattern id="bunting" x="0" y="0" width="100" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 0 5 Q 25 20 50 5 Q 75 20 100 5" fill="none" stroke="#475569" stroke-width="2"/>
+                <polygon points="5,8 25,12 15,35" fill="#ef4444"/>
+                <polygon points="55,12 75,8 65,35" fill="white"/>
+            </pattern>
+        </defs>
+    </svg>
+
+    <div class="game-container" id="appContainer">
+        
+        <!-- TOMBOL FULLSCREEN GLOBAL -->
+        <button id="btnFullscreen" class="absolute bottom-4 right-4 bg-white/70 backdrop-blur hover:bg-white text-gray-800 p-2 sm:p-3 rounded-xl shadow-md transition-all z-[100] flex items-center gap-2 border border-gray-300" title="Layar Penuh">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            <span class="font-bold hidden sm:block text-xs sm:text-sm">Layar Penuh</span>
+        </button>
+
+        <section id="screen-setup" class="h-full w-full flex flex-col p-4 sm:p-8 custom-scroll overflow-y-auto relative pb-20">
+            <header class="text-center mb-6 mt-2">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-green-800 drop-shadow-sm tracking-tight mb-2">Tarik Tambang Edukatif</h1>
+                <p class="text-gray-600 text-lg max-w-2xl mx-auto">Aplication Developed By Misbahul Munir.</p>
+            </header>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 max-w-4xl mx-auto w-full border-t-8 border-green-500 mb-6">
+                
+                <!-- PILIH SUMBER SOAL INTERAKTIF -->
+                <div class="mb-6">
+                    <label class="block text-base font-black text-gray-800 mb-3">Pilih Sumber Soal:</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="sourceType" value="builtin" class="peer sr-only" checked>
+                            <div class="p-3 rounded-lg border-2 border-gray-200 peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition-all text-center">
+                                <span class="block text-2xl mb-1">📚</span>
+                                <span class="font-bold text-sm text-gray-700 peer-checked:text-green-700">Topik Bawaan</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="sourceType" value="sheets" class="peer sr-only">
+                            <div class="p-3 rounded-lg border-2 border-gray-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50 transition-all text-center">
+                                <span class="block text-2xl mb-1">🔗</span>
+                                <span class="font-bold text-sm text-gray-700 peer-checked:text-blue-700">Google Sheets</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="sourceType" value="ai" class="peer sr-only">
+                            <div class="p-3 rounded-lg border-2 border-gray-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 hover:bg-gray-50 transition-all text-center">
+                                <span class="block text-2xl mb-1">✨</span>
+                                <span class="font-bold text-sm text-gray-700 peer-checked:text-purple-700">Generator AI</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    
+                    <!-- KONTEN: TOPIK BAWAAN -->
+                    <div id="section-builtin" class="source-section block bg-green-50 p-5 rounded-xl border-2 border-green-300 shadow-inner">
+                        <label for="instantTopic" class="block text-sm font-bold text-green-800 mb-2">Pilih Soal Siap Main (Offline):</label>
+                        <select id="instantTopic" class="w-full px-4 py-3 border-2 border-green-400 rounded-lg font-bold text-gray-800 focus:ring-2 focus:ring-green-600 outline-none bg-white text-sm">
+                            <option value="default" selected>✨ Campuran Bawaan (Default - 15 Soal)</option>
+                            <option value="pancasila">🇮🇩 Pendidikan Pancasila / PKn</option>
+                            <option value="pai">🕌 Pendidikan Agama Islam / PAI</option>
+                            <option value="rukun_iman">🌙 Rukun Iman & Rukun Islam</option>
+                            <option value="tata_surya">🚀 Sains: Tata Surya & Planet</option>
+                            <option value="makhluk_hidup">🌿 Sains: Makhluk Hidup & Lingkungan</option>
+                            <option value="matematika">🔢 Matematika Dasar Pintar</option>
+                            <option value="bahasa_indonesia">✍️ Bahasa Indonesia Dasar</option>
+                            <option value="sejarah_umum">🏛️ Sejarah & Pengetahuan Umum</option>
+                        </select>
+                        <p class="text-xs text-green-700 mt-2 font-medium">Bisa langsung main!</p>
+                    </div>
+
+                    <!-- KONTEN: GOOGLE SHEETS -->
+                    <div id="section-sheets" class="source-section hidden bg-blue-50 p-5 rounded-xl border-2 border-blue-300 shadow-inner">
+                        <label for="csvUrl" class="block text-sm font-bold text-blue-800 mb-2">URL Google Sheets Anda:</label>
+                        <input type="text" id="csvUrl" placeholder="Tempel URL Sheet format CSV di sini..." class="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm transition-colors">
+                        <p class="text-[10px] text-blue-600 mt-2">Pastikan Sheet disetting "Siapa saja memiliki link". Format kolom: Pertanyaan | Opsi A | Opsi B | Opsi C | Opsi D | Jawaban Benar</p>
+                    </div>
+
+                    <!-- KONTEN: GENERATOR AI -->
+                    <div id="section-ai" class="source-section hidden bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-300 shadow-inner">
+                        <div class="flex flex-col gap-3">
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input type="text" id="aiTopic" placeholder="Topik bebas (misal: Tata Surya)" class="flex-grow px-4 py-3 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-800 shadow-inner text-sm">
+                                <select id="aiTingkat" class="w-full sm:w-1/4 px-3 py-3 border border-purple-300 rounded-lg outline-none bg-white font-medium text-gray-700 text-sm">
+                                    <option value="SD Kelas 1-3">SD 1-3</option>
+                                    <option value="SD Kelas 4-6" selected>SD 4-6</option>
+                                    <option value="SMP">SMP</option>
+                                    <option value="SMA">SMA</option>
+                                </select>
+                                <div class="flex items-center gap-1 bg-white border border-purple-300 rounded-lg px-2 w-full sm:w-1/6 justify-center">
+                                    <span class="text-xs font-bold text-gray-500">Soal:</span>
+                                    <input type="number" id="aiJumlah" value="10" min="5" max="30" class="w-10 py-2 outline-none text-center bg-transparent font-bold text-purple-700">
+                                </div>
+                            </div>
+                            <button type="button" id="btnGenerateAI" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <span>Buat Soal</span>
+                            </button>
+                        </div>
+                        <p id="aiStatusText" class="text-xs text-purple-600 mt-2 font-bold hidden text-center bg-white border border-purple-100 p-2 rounded-lg shadow-sm">Buat soal... ⏳</p>
+                    </div>
+
+                    <!-- TARGET POIN (Global untuk semua mode) -->
+                    <div>
+                        <label for="targetScore" class="block text-sm font-bold text-gray-700 mb-1">🎯 Target Poin Kemenangan</label>
+                        <select id="targetScore" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-sm">
+                            <option value="3">3 Poin (Cepat)</option>
+                            <option value="5" selected>5 Poin (Normal)</option>
+                            <option value="10">10 Poin (Panjang)</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2">
+                        <button id="btnStartSetup" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 px-6 rounded-xl shadow-[0_4px_0_0_#15803d] hover:shadow-[0_2px_0_0_#15803d] hover:translate-y-[2px] transition-all text-xl uppercase tracking-wider">
+                            MULAI PERMAINAN 🚀
+                        </button>
+                    </div>
+                </div>
+                <div id="setupStatus" class="mt-4 text-center text-sm font-bold text-blue-600 hidden">Memuat soal...</div>
+            </div>
+        </section>
+
+        <!-- LAYAR ARENA PERTANDINGAN 16:9 -->
+        <section id="screen-arena" class="hidden h-full w-full flex-col bg-white">
+            <div class="rope-container h-[40%] shrink-0" id="arenaContainer">
+                <svg class="absolute inset-0 w-full h-full object-cover z-0" preserveAspectRatio="none" viewBox="0 0 800 300">
+                    <rect width="100%" height="100%" fill="url(#sky-grad)"/>
+                    <g fill="white" opacity="0.9">
+                        <circle cx="100" cy="50" r="25"/><circle cx="130" cy="45" r="30"/><circle cx="160" cy="50" r="20"/>
+                        <circle cx="650" cy="80" r="35"/><circle cx="680" cy="70" r="45"/><circle cx="720" cy="80" r="30"/>
+                    </g>
+                    <path d="M 0 160 Q 200 130 400 170 T 800 150 L 800 300 L 0 300 Z" fill="url(#grass-grad1)"/>
+                    <path d="M 0 190 Q 250 210 500 180 T 800 200 L 800 300 L 0 300 Z" fill="#65a30d"/>
+                    <rect x="0" y="-5" width="100%" height="50" fill="url(#bunting)"/>
+                    <rect x="0" y="25" width="100%" height="50" fill="url(#bunting)" transform="translate(50, 0) scale(0.8) opacity(0.6)"/>
+                </svg>
+
+                <div class="victory-line victory-line-a"></div>
+                <div class="victory-line victory-line-b"></div>
+                
+                <div class="rope" id="ropeElement"></div>
+                <div class="ribbon" id="ribbonElement"></div>
+                
+                <div class="team-avatar team-a-avatar" id="avatarContainerA">
+                    <svg viewBox="-20 0 250 140" class="h-full w-auto drop-shadow-xl overflow-visible struggle-anim" id="avatarA">
+                        <use href="#kid-red" x="0" y="0" />
+                        <use href="#kid-red" x="65" y="0" />
+                        <use href="#kid-red" x="130" y="0" />
+                    </svg>
+                </div>
+
+                <div class="team-avatar team-b-avatar" id="avatarContainerB">
+                    <svg viewBox="-20 0 250 140" class="h-full w-auto drop-shadow-xl overflow-visible struggle-anim" id="avatarB">
+                        <use href="#kid-blue" x="0" y="0" />
+                        <use href="#kid-blue" x="65" y="0" />
+                        <use href="#kid-blue" x="130" y="0" />
+                    </svg>
+                </div>
+
+                <div class="absolute top-2 left-4 z-40 bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-xl border border-red-200 shadow font-black text-red-600 text-xl sm:text-2xl" id="scoreDisplayA">Skor: 0</div>
+                <div class="absolute top-2 right-4 z-40 bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-xl border border-blue-200 shadow font-black text-blue-600 text-xl sm:text-2xl" id="scoreDisplayB">Skor: 0</div>
+            </div>
+
+            <!-- Area Panel Bawah (Soal & Jawaban) -->
+            <div class="flex-1 flex flex-row p-2 sm:p-3 gap-2 sm:gap-4 bg-gray-50 overflow-hidden pb-3">
+                <div class="flex-1 bg-white rounded-xl shadow-md border-2 border-red-200 flex flex-col p-2 sm:p-3 overflow-hidden">
+                    <div class="flex items-center justify-between mb-1 sm:mb-2 shrink-0">
+                        <span class="text-[10px] sm:text-sm font-black text-red-600 uppercase">🔴 Merah</span>
+                        <span id="feedbackA" class="font-bold text-xs sm:text-sm transition-opacity duration-300 opacity-0 bg-gray-100 px-2 rounded"></span>
+                    </div>
+                    <div class="flex-1 flex flex-col gap-2 overflow-hidden">
+                        <div class="flex-1 flex items-center justify-center bg-red-50 p-2 sm:p-3 rounded-lg border border-red-100 overflow-hidden text-center">
+                            <span id="questionTextA" class="w-full text-xs sm:text-sm md:text-base font-bold text-gray-800 leading-tight">Memuat...</span>
+                        </div>
+                        <div class="flex-1 grid grid-cols-2 grid-rows-2 gap-1.5 sm:gap-2" id="optionsContainerA"></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-white rounded-xl shadow-md border-2 border-blue-200 flex flex-col p-2 sm:p-3 overflow-hidden">
+                    <div class="flex items-center justify-between mb-1 sm:mb-2 shrink-0">
+                        <span id="feedbackB" class="font-bold text-xs sm:text-sm transition-opacity duration-300 opacity-0 bg-gray-100 px-2 rounded"></span>
+                        <span class="text-[10px] sm:text-sm font-black text-blue-600 uppercase">Biru 🔵</span>
+                    </div>
+                    <div class="flex-1 flex flex-col gap-2 overflow-hidden">
+                        <div class="flex-1 flex items-center justify-center bg-blue-50 p-2 sm:p-3 rounded-lg border border-blue-100 overflow-hidden text-center">
+                            <span id="questionTextB" class="w-full text-xs sm:text-sm md:text-base font-bold text-gray-800 leading-tight">Memuat...</span>
+                        </div>
+                        <div class="flex-1 grid grid-cols-2 grid-rows-2 gap-1.5 sm:gap-2" id="optionsContainerB"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LAYAR HASIL -->
+        <section id="screen-result" class="hidden h-full w-full flex-col items-center justify-center bg-white p-8 relative">
+            <div class="absolute inset-0 z-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, #4ade80 0, #4ade80 2px, transparent 2px, transparent 10px);"></div>
+            
+            <div class="z-10 bg-white p-8 rounded-3xl shadow-2xl border-4 max-w-lg w-full text-center" id="resultCard">
+                <div id="winnerIcon" class="text-6xl mb-2 animate-bounce">🏆</div>
+                <h3 id="winnerText" class="text-4xl font-black mb-1">Selamat Tim A!</h3>
+                <p id="winnerSubtext" class="text-gray-500 font-medium mb-6 text-sm">Menang telak dalam adu cepat tarik tambang!</p>
+                
+                <div class="flex justify-around items-center bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100 shadow-inner">
+                    <div class="text-center">
+                        <div class="text-xs font-bold text-red-500 uppercase tracking-widest">Merah</div>
+                        <div id="finalScoreA" class="text-5xl font-black text-gray-800">0</div>
+                    </div>
+                    <div class="text-3xl font-black text-gray-200">-</div>
+                    <div class="text-center">
+                        <div class="text-xs font-bold text-blue-500 uppercase tracking-widest">Biru</div>
+                        <div id="finalScoreB" class="text-5xl font-black text-gray-800">0</div>
+                    </div>
+                </div>
+
+                <button id="btnAICommentary" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow transition-transform transform active:scale-95 mb-3 text-sm flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                    Komentator AI (Gemini)
+                </button>
+                <div id="aiCommentaryBox" class="hidden bg-orange-50 border border-orange-200 rounded-lg p-4 text-orange-900 font-semibold italic text-sm shadow-inner mb-4 text-left leading-snug"></div>
+
+                <button id="btnRestart" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 px-8 rounded-xl shadow transition-colors text-sm uppercase tracking-wider">Ke Menu Utama</button>
+            </div>
+        </section>
+
+        <!-- CATATAN KAKI (FOOTER) -->
+        <div class="absolute bottom-1 left-0 w-full text-center z-50 pointer-events-none">
+            <span class="text-[10px] md:text-xs text-gray-500 bg-white/70 backdrop-blur-sm px-3 py-1 rounded-full font-semibold shadow-sm border border-gray-100">
+                Tarik Tambang Pintar | Developed By Misbahul Munir
+            </span>
+        </div>
+
+    </div>
+
+    <script>
+        // Logika Pilihan Sumber Soal
+        const sourceRadios = document.querySelectorAll('input[name="sourceType"]');
+        const sections = {
+            builtin: document.getElementById('section-builtin'),
+            sheets: document.getElementById('section-sheets'),
+            ai: document.getElementById('section-ai')
+        };
+
+        sourceRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                // Sembunyikan semua section
+                Object.values(sections).forEach(sec => {
+                    sec.classList.remove('block');
+                    sec.classList.add('hidden');
+                });
+                // Tampilkan section yang dipilih
+                const selectedSec = sections[e.target.value];
+                selectedSec.classList.remove('hidden');
+                selectedSec.classList.add('block');
+            });
+        });
+
+        // Logika Fullscreen
+        const btnFullscreen = document.getElementById('btnFullscreen');
+
+        btnFullscreen.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                let fsPromise;
+                if (document.documentElement.requestFullscreen) {
+                    fsPromise = document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    fsPromise = document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    fsPromise = document.documentElement.msRequestFullscreen();
+                }
+                
+                if (fsPromise !== undefined) {
+                    fsPromise.then(() => {
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(function(error) {
+                                console.log("Kunci orientasi tidak didukung", error);
+                            });
+                        }
+                    }).catch(error => {
+                        console.warn("Fullscreen diblokir");
+                    });
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+
+        // Data Default & Variabel Global
+        const defaultCSVData = `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Berapakah hasil dari 7 x 8?,54,56,64,48,56
+Ibukota negara Indonesia adalah?,Bandung,Surabaya,Jakarta,Medan,Jakarta
+Planet manakah yang dijuluki Planet Merah?,Venus,Mars,Jupiter,Saturnus,Mars
+Siapakah penemu bola lampu pijar?,Nikola Tesla,Thomas Alva Edison,Albert Einstein,Isaac Newton,Thomas Alva Edison
+Hewan mamalia yang bisa terbang adalah?,Burung Onta,Kelelawar,Pinguin,Tupai Terbang,Kelelawar
+Rumus kimia untuk air adalah?,CO2,H2O,O2,NaCl,H2O
+Berapa jumlah provinsi di Indonesia saat ini (perkiraan)?,33,34,38,37,38
+Gunung tertinggi di dunia adalah?,K2,Kilimanjaro,Everest,Semeru,Everest
+Alat pernapasan pada ikan adalah?,Paru-paru,Insang,Trakea,Kulit,Insang
+Benda yang dapat menarik besi disebut?,Plastik,Karet,Magnet,Kaca,Magnet
+Benua terluas di dunia adalah?,Afrika,Eropa,Asia,Amerika,Asia
+Simbol kimia untuk Emas adalah?,Ag,Au,Fe,Cu,Au
+Sistem peredaran darah manusia berpusat di?,Otak,Jantung,Paru-paru,Hati,Jantung
+Alat ukur suhu adalah?,Barometer,Termometer,Anemometer,Higrometer,Termometer
+Tumbuhan hijau membuat makanannya sendiri melalui proses?,Respirasi,Transpirasi,Fotosintesis,Oksidasi,Fotosintesis`;
+
+        const daftarTopikSoal = {
+            default: defaultCSVData,
+            pancasila: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Lambang sila ke-3 dalam Pancasila adalah?,Bintang,Pohon Beringin,Kepala Banteng,Padi dan Kapas,Pohon Beringin
+Bunyi dari sila Pancasila ke-5 adalah?,Ketuhanan Yang Maha Esa,Persatuan Indonesia,Keadilan sosial bagi seluruh rakyat Indonesia,Kemanusiaan yang adil dan beradab,Keadilan sosial bagi seluruh rakyat Indonesia
+Padi dan kapas melambangkan sila Pancasila ke?,2,3,4,5,5
+Kepala banteng melambangkan sila Pancasila ke?,2,3,4,5,4
+Musyawarah untuk mencapai mufakat adalah penerapan sila Pancasila ke?,1,2,3,4,4
+Sikap mencintai produk dalam negeri merupakan pengamalan sila ke?,1,2,3,4,3
+Warna latar belakang pada lambang bintang sila ke-1 adalah?,Merah,Kuning,Hitam,Putih,Hitam
+Lambang sila ke-2 Pancasila adalah?,Bintang,Rantai,Kepala Banteng,Pohon Beringin,Rantai
+Sikap tidak membeda-bedakan teman berdasarkan suku pengamalan sila ke?,2,3,4,5,2
+Dasar negara Republik Indonesia adalah?,UUD 1945,Pancasila,Garuda Pancasila,Bhinneka Tunggal Ika,Pancasila
+Hari lahir Pancasila diperingati setiap tanggal?,17 Agustus,1 Juni,20 Mei,1 Oktober,1 Juni
+Sidang pertama BPUPKI membahas tentang?,Bentuk Negara,Dasar Negara,UUD 1945,Ibukota Negara,Dasar Negara
+Pancasila dirumuskan pertama kali oleh lembaga?,BPUPKI,PPKI,KNIP,MPR,BPUPKI
+Lambang sila ke-4 dalam Pancasila adalah?,Pohon Beringin,Kepala Banteng,Padi dan Kapas,Rantai,Kepala Banteng
+Sila pertama Pancasila menekankan tentang hubungan manusia dengan?,Tuhan,Negara,Sesama manusia,Alam sekitar,Tuhan`,
+            pai: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Nabi dan rasul yang terakhir diutus oleh Allah SWT adalah?,Nabi Isa AS,Nabi Ibrahim AS,Nabi Muhammad SAW,Nabi Musa AS,Nabi Muhammad SAW
+Surah Al-Fatihah terdiri dari berapa ayat?,5,6,7,8,7
+Kitab suci yang diturunkan kepada Nabi Musa AS adalah?,Taurat,Zabur,Injil,Al-Qur'an,Taurat
+Zakat yang wajib dikeluarkan pada akhir bulan Ramadhan disebut?,Zakat Maal,Zakat Fitrah,Zakat Pertanian,Sadaqah,Zakat Fitrah
+Shalat fardhu yang dikerjakan pada saat fajar menyingsing adalah?,Shalat Dzuhur,Shalat Ashar,Shalat Subuh,Shalat Isya,Shalat Subuh
+Gerakan pertama dalam ibadah shalat setelah niat adalah?,Rukuk,Sujud,Takbiratul Ihram,Tahiyyat,Takbiratul Ihram
+Shalat sunnah yang dikerjakan pada malam bulan Ramadhan adalah?,Shalat Tahajjud,Shalat Tarawih,Shalat Witir,Shalat Duha,Shalat Tarawih
+Malaikat yang bertugas menyampaikan wahyu adalah?,Malaikat Mikail,Malaikat Jibril,Malaikat Israfil,Malaikat Izrail,Malaikat Jibril
+Shalat sunnah dua rakaat setelah matahari terbit disebut?,Shalat Duha,Shalat Witir,Shalat Hajat,Shalat Tahajjud,Shalat Duha
+Nabi yang terkenal dengan mukjizat membelah laut Merah adalah?,Nabi Nuh AS,Nabi Yusuf AS,Nabi Ibrahim AS,Nabi Musa AS,Nabi Musa AS
+Surah terpendek dalam Al-Qur'an adalah?,Surah Al-Ikhlas,Surah Al-Kautsar,Surah An-Nas,Surah Al-Falaq,Surah Al-Kautsar
+Perilaku berkata jujur dan benar dalam Islam disebut?,Amanah,Siddiq,Fathonah,Tabligh,Siddiq
+Tempat ibadah umat Islam adalah?,Gereja,Pura,Masjid,Vihara,Masjid
+Arah kiblat bagi umat Islam saat melaksanakan ibadah shalat adalah?,Baitul Maqdis,Masjid Nabawi,Ka'bah di Makkah,Matahari Terbit,Ka'bah di Makkah
+Membaca Al-Qur'an dengan tartil dan tajwid yang benar hukumnya?,Mubah,Makruh,Sunnah muakkad,Wajib/Fardhu,Wajib/Fardhu`,
+            rukun_iman: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Berapakah jumlah Rukun Iman dalam ajaran Islam?,5,6,10,20,6
+Berapakah jumlah Rukun Islam?,5,6,7,8,5
+Rukun Islam yang pertama adalah?,Mendirikan Shalat,Mengucapkan Dua Kalimat Syahadat,Membayar Zakat,Melaksanakan Ibadah Haji,Mengucapkan Dua Kalimat Syahadat
+Rukun Iman yang kedua adalah?,Iman kepada Malaikat Allah,Iman kepada Kitab Allah,Iman kepada Rasul Allah,Iman kepada Hari Kiamat,Iman kepada Malaikat Allah
+Mengeluarkan sebagian harta bagi yang mampu disebut rukun Islam ke?,2,3,4,5,3
+Beriman kepada Qada dan Qadar adalah rukun Iman ke?,3,4,5,6,6
+Puasa pada bulan Ramadhan merupakan rukun Islam yang ke?,2,3,4,5,4
+Ibadah haji wajib dilaksanakan bagi yang?,Laki-laki saja,Perempuan saja,Mampu secara fisik dan finansial,Tokoh masyarakat,Mampu secara fisik dan finansial
+Malaikat yang bertugas meniup sangkakala pada hari kiamat adalah?,Israfil,Jibril,Mikail,Izrail,Israfil
+Malaikat yang bertugas menjaga pintu surga bernama?,Malik,Ridwan,Atid,Munkar,Ridwan
+Kitab suci Zabur diturunkan kepada Nabi?,Nabi Daud AS,Nabi Musa AS,Nabi Isa AS,Nabi Muhammad SAW,Nabi Daud AS
+Kalimat thoyyibah untuk memuji keagungan Allah SWT adalah?,Alhamdulillah,Subhanallah,Allahu Akbar,Astaghfirullah,Subhanallah`,
+            tata_surya: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Pusat dari sistem tata surya kita adalah?,Bumi,Bulan,Matahari,Jupiter,Matahari
+Planet yang paling dekat dengan Matahari adalah?,Venus,Merkurius,Bumi,Mars,Merkurius
+Planet terbesar di dalam sistem tata surya kita adalah?,Saturnus,Uranus,Neptunus,Jupiter,Jupiter
+Planet yang memiliki cincin yang sangat besar dan indah adalah?,Mars,Jupiter,Saturnus,Uranus,Saturnus
+Planet yang dijuluki sebagai "Planet Merah" adalah?,Merkurius,Venus,Mars,Neptunus,Mars
+Satelit alami yang mengelilingi Bumi adalah?,Phobos,Bulan,Titan,Ganymede,Bulan
+Planet terdingin dalam tata surya kita adalah?,Venus,Saturnus,Neptunus,Uranus,Neptunus
+Gaya tarik-menarik antara benda di alam semesta disebut gaya?,Magnet,Pegas,Gesek,Gravitasi,Gaya Gravitasi
+Benda langit kecil yang mengorbit matahari dan sering disebut bintang jatuh adalah?,Meteoroid,Komet,Asteroid,Galaksi,Meteoroid
+Arah revolusi planet mengelilingi matahari adalah?,Searah jarum jam,Berlawanan jarum jam,Dari utara ke selatan,Dari timur ke barat,Berlawanan jarum jam
+Waktu yang diperlukan Bumi untuk mengelilingi Matahari satu kali disebut?,Kala Rotasi,Kala Revolusi,Kala Gerhana,Tahun Cahaya,Kala Revolusi
+Planet yang terkenal memiliki badai merah besar (Great Red Spot) adalah?,Saturnus,Neptunus,Jupiter,Mars,Jupiter
+Garis khayal yang membagi Bumi menjadi belahan Utara dan Selatan disebut?,Garis Bujur,Garis Khatulistiwa/Ekuator,Garis Meridian,Garis lintang,Garis Khatulistiwa/Ekuator
+Planet yang memiliki kala rotasi paling lambat dan bersuhu sangat panas adalah?,Merkurius,Venus,Mars,Bumi,Venus
+Benda langit yang memiliki ekor gas menyala saat mendekati matahari adalah?,Komet,Asteroid,Meteor,Satelit,Komet`,
+            makhluk_hidup: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Bagian tumbuhan yang bertugas menyerap air dan hara dari dalam tanah adalah?,Daun,Batang,Bunga,Akar,Akar
+Proses tumbuhan hijau membuat makanannya sendiri dengan bantuan cahaya matahari disebut?,Respirasi,Fotosintesis,Transpirasi,Metamorfosis,Fotosintesis
+Zat hijau daun yang sangat penting dalam proses fotosintesis adalah?,Stomata,Klorofil,Xilem,Floem,Klorofil
+Hewan yang memakan tumbuh-tumbuhan saja dikelompokkan sebagai?,Karnivora,Herbivora,Omnivora,Insektivora,Herbivora
+Hewan yang bernapas menggunakan paru-paru dan hidup di air adalah?,Ikan Mas,Lumba-lumba,Kepiting,Cumi-cumi,Lumba-lumba
+Tempat tinggal suatu makhluk hidup untuk tumbuh dan berkembang biak disebut?,Komunitas,Ekosistem,Habitat,Populsi,Habitat
+Hubungan saling menguntungkan antara dua makhluk hidup (misal lebah dan bunga) disebut?,Simbiosis Mutualisme,Simbiosis Komensalisme,Simbiosis Parasitisme,Predasi,Simbiosis Mutualisme
+Berikut yang termasuk tumbuhan pemakan serangga adalah?,Kantong Semar,Pohon Beringin,Bunga Melati,Putri Malu,Kantong Semar
+Hewan yang mengalami metamorfosis sempurna adalah?,Belalang,Kecoak,Kupu-kupu,Jangkrik,Kupu-kupu
+Alat pernapasan pada berudu (kecebong) saat hidup di air adalah?,Paru-paru,Insang,Kulit,Trakea,Insang
+Fungsi utama stomata pada daun tumbuhan adalah sebagai tempat?,Fotosintesis,Penyimpanan makanan,Pertukaran gas/Pernapasan,Penyerapan air,Pertukaran gas/Pernapasan
+Hubungan antara kutu rambut dengan manusia merupakan contoh simbiosis?,Mutualisme,Komensalisme,Parasitisme,Amensalisme,Parasitisme
+Tumbuhan eceng gondok dapat mengapung di permukaan air karena memiliki batang yang?,Padat dan keras,Berongga/Banyak kantung udara,Sangat panjang,Berduri tajam,Berongga/Banyak kantung udara
+Tujuan utama makhluk hidup melakukan adaptasi adalah untuk?,Berkembang biak,Bertahan hidup dan menyesuaikan diri,Mencari musuh,Pindah habitat,Bertahan hidup dan menyesuaikan diri
+Bagian bunga yang berfungsi sebagai alat kelamin jantan adalah?,Putik,Benang Sari,Mahkota,Kelopak,Benang Sari`,
+            matematika: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Berapakah hasil dari 12 x 12?,122,144,134,154,144
+Hasil dari 250 + 350 - 125 adalah?,475,500,450,525,475
+Berapakah hasil dari 81 dibagi dengan 9?,7,8,9,11,9
+Nilai tempat angka 5 pada bilangan 3.520 adalah?,Satuan,Puluhan,Ratusan,Ribuan,Ratusan
+Berapakah hasil dari 7 x 8?,54,56,64,48,56
+Satu jam terdiri dari berapa menit?,30 menit,60 menit,90 menit,120 menit,60 menit
+Bentuk desimal dari pecahan 1/2 adalah?,0.2,0.5,0.25,0.75,0.5
+Sebuah persegi memiliki sisi 6 cm. Berapakah luas persegi tersebut?,24 cm²,36 cm²,12 cm²,18 cm²,36 cm²
+Berapakah hasil dari 15% dari 200?,15,20,30,40,30
+FPB dari bilangan 12 dan 18 adalah?,4,6,8,12,6
+Berapakah jumlah sudut pada bangun datar segitiga?,2,3,4,5,3
+Hasil penambahan dari 3/4 + 1/4 adalah?,1,1/2,4/8,1/4,1
+Rumus untuk menghitung luas persegi panjang adalah?,Sisi x Sisi,Alas x Tinggi,Panjang x Lebar,2 x (P + L),Panjang x Lebar
+Jika x + 7 = 15, berapakah nilai x?,6,7,8,9,8
+Berapakah bilangan prima pertama setelah angka 10?,11,13,15,17,11`,
+            bahasa_indonesia: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Kata yang menunjukkan nama tempat atau benda disebut kata?,Benda (Nomina),Kerja (Verba),Sifat (Adjektiva),Keterangan,Benda (Nomina)
+Lawan kata atau antonim dari kata "Luas" adalah?,Lebar,Sempit,Besar,Panjang,Sempit
+Kalimat yang memerlukan tanggapan atau jawaban disebut kalimat?,Tanya,Perintah,Berita,Seruan,Tanya
+Ide pokok atau gagasan utama dalam suatu paragraf biasanya terletak di?,Awal atau akhir paragraf,Tengah paragraf,Judul paragraf,Semua kalimat,Awal atau akhir paragraf
+Kata tanya yang digunakan untuk menanyakan alasan atau sebab adalah?,Bagaimana,Mengapa,Di mana,Siapa,Mengapa
+Persamaan kata atau sinonim dari kata "Pintar" adalah?,Cerdas,Rajin,Giat,Malas,Cerdas
+Tanda baca yang digunakan untuk mengakhiri kalimat berita adalah?,Tanda Tanya (?),Tanda Seru (!),Tanda Titik (.),Koma (,),Tanda Titik (.)
+Huruf pertama pada awal kalimat harus menggunakan huruf?,Kecil,Kapital (Besar),Miring,Tebal,Kapital (Besar)
+Dongeng yang menceritakan tentang kehidupan hewan yang berperilaku seperti manusia disebut?,Mitos,Legenda,Fabel,Sage,Fabel
+Kalimat yang disusun sesuai dengan kaidah tata bahasa yang berlaku disebut kalimat?,Efektif,Sederhana,Majemuk,Pasif,Efektif
+Imbuhan "me-" pada kata "melihat" memiliki kata dasar?,Lihat,Melihat,Kulihat,Pelihat,Lihat
+Penulisan nama orang dan nama kota yang benar harus diawali huruf?,Kecil,Kapital,Miring,Tebal,Kapital`,
+            sejarah_umum: `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
+Hari Kemerdekaan Republik Indonesia diperingati setiap tanggal?,1 Juni,17 Agustus,10 November,28 Oktober,17 Agustus
+Presiden pertama Republik Indonesia adalah?,Drs. Moh. Hatta,Ir. Soekarno,Soeharto,B.J. Habibie,Ir. Soekarno
+Lagu kebangsaan negara Indonesia adalah?,Indonesia Raya,Bagimu Negeri,Satu Nusa Satu Bangsa,Hari Merdeka,Indonesia Raya
+Bendera pusaka negara Indonesia berwarna?,Merah dan Putih,Merah dan Biru,Hijau dan Putih,Kuning dan Merah,Merah dan Putih
+Sumpah Pemuda dibacakan dan diperingati setiap tanggal?,2 Mei,17 Agustus,28 Oktober,10 November,28 Oktober
+Kota di Jepang yang dijatuhi bom atom pertama kali oleh Sekutu pada tahun 1945 adalah?,Tokyo,Kyoto,Hiroshima,Nagasaki,Hiroshima
+Teks proklamasi kemerdekaan Indonesia dirumuskan di rumah?,Laksamana Maeda,Ir. Soekarno,Moh. Hatta,Jenderal Terauchi,Laksamana Maeda
+Penjahit bendera Merah Putih pertama saat proklamasi adalah?,Ibu Fatmawati,Megawati,Kartini,Cut Nyak Dien,Ibu Fatmawati
+Tokoh yang membacakan teks Proklamasi Kemerdekaan Indonesia adalah?,Moh. Hatta,Soeharto,Ir. Soekarno,Ki Hajar Dewantara,Ir. Soekarno
+Kota tempat terjadinya pertempuran sengit 10 November yang kini diperingati sebagai Hari Pahlawan adalah?,Jakarta,Bandung,Surabaya,Semarang,Surabaya
+Semboyan pemersatu bangsa Indonesia adalah?,Bhinneka Tunggal Ika,Tut Wuri Handayani,Ing Ngarsa Sung Tuladha,Pancasila,Bhinneka Tunggal Ika
+Candi Budha terbesar di Indonesia yang terletak di Magelang Jawa Tengah adalah?,Prambanan,Borobudur,Mendut,Kalasan,Borobudur
+Samudra yang mengapit wilayah negara Indonesia adalah?,Pasifik dan Hindia,Atlantik dan Hindia,Pasifik dan Atlantik,Arktik dan Pasifik,Pasifik dan Hindia
+Suku bangsa yang terkenal dengan rumah adat Gadang adalah suku?,Jawa,Sunda,Minangkabau,Dayak,Minangkabau
+Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawan Solo,Sungai Brantas,Bengawan Solo`
+        };
+
+        let bankSoal = [];
+        let scoreA = 0;
+        let scoreB = 0;
+        let targetWinScore = 5;
+        let isGameOver = false;
+        let aiGeneratedQuestions = null;
+
+        const screenSetup = document.getElementById('screen-setup');
+        const screenArena = document.getElementById('screen-arena');
+        const screenResult = document.getElementById('screen-result');
+        const btnStartSetup = document.getElementById('btnStartSetup');
+        const btnRestart = document.getElementById('btnRestart');
+        const setupStatus = document.getElementById('setupStatus');
+
+        const ribbonElement = document.getElementById('ribbonElement');
+        const scoreDisplayA = document.getElementById('scoreDisplayA');
+        const scoreDisplayB = document.getElementById('scoreDisplayB');
+
+        const questionTextA = document.getElementById('questionTextA');
+        const optionsContainerA = document.getElementById('optionsContainerA');
+        const feedbackA = document.getElementById('feedbackA');
+        const avatarContainerA = document.getElementById('avatarContainerA');
+        const avatarSVG_A = document.getElementById('avatarA');
+
+        const questionTextB = document.getElementById('questionTextB');
+        const optionsContainerB = document.getElementById('optionsContainerB');
+        const feedbackB = document.getElementById('feedbackB');
+        const avatarContainerB = document.getElementById('avatarContainerB');
+        const avatarSVG_B = document.getElementById('avatarB');
+
+        function switchScreen(screenToShow) {
+            screenSetup.classList.add('hidden');
+            screenArena.classList.add('hidden');
+            screenArena.classList.remove('flex');
+            screenResult.classList.add('hidden');
+            screenResult.classList.remove('flex');
+
+            if(screenToShow === 'arena') {
+                screenArena.classList.remove('hidden');
+                screenArena.classList.add('flex');
+            } else if (screenToShow === 'result') {
+                screenResult.classList.remove('hidden');
+                screenResult.classList.add('flex');
+            } else {
+                document.getElementById('screen-' + screenToShow).classList.remove('hidden');
+            }
+        }
+
+        function getCsvExportUrl(url) {
+            if (url.includes('export?format=csv') || url.endsWith('.csv')) {
+                return url;
+            }
+            const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (match && match[1]) {
+                const sheetId = match[1];
+                let gid = "0";
+                const gidMatch = url.match(/[#&]gid=([0-9]+)/);
+                if (gidMatch && gidMatch[1]) {
+                    gid = gidMatch[1];
+                }
+                return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+            }
+            return url;
+        }
+
+        btnStartSetup.addEventListener('click', () => {
+            const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+            targetWinScore = parseInt(document.getElementById('targetScore').value);
+            setupStatus.classList.remove('hidden');
+            setupStatus.textContent = "Memproses data...";
+
+            if (sourceType === 'ai') {
+                if (aiGeneratedQuestions && aiGeneratedQuestions.length > 0) {
+                    bankSoal = aiGeneratedQuestions;
+                    setupStatus.textContent = "Memuat soal cerdas dari AI...";
+                    startGame();
+                } else {
+                    alert("Silakan klik tombol '✨ Racik Soal AI' terlebih dahulu untuk menghasilkan soal!");
+                    setupStatus.classList.add('hidden');
+                }
+            } else if (sourceType === 'sheets') {
+                const rawUrl = document.getElementById('csvUrl').value.trim();
+                if (!rawUrl) {
+                    alert("Silakan masukkan URL Google Sheets Anda terlebih dahulu!");
+                    setupStatus.classList.add('hidden');
+                    return;
+                }
+                const url = getCsvExportUrl(rawUrl);
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if(results.data && results.data.length > 0 && results.data[0]['Pertanyaan']) {
+                            bankSoal = results.data;
+                            startGame();
+                        } else {
+                            alert("Gagal memuat format CSV. Pastikan format kolom sesuai dengan petunjuk.");
+                            setupStatus.classList.add('hidden');
+                        }
+                    },
+                    error: function() {
+                        alert("URL tidak dapat diakses. Pastikan Sheet sudah di-publish ke Web.");
+                        setupStatus.classList.add('hidden');
+                    }
+                });
+            } else { // builtin
+                const instantTopicKey = document.getElementById('instantTopic').value;
+                loadBuiltInDataAndStart(instantTopicKey);
+            }
+        });
+
+        btnRestart.addEventListener('click', () => {
+            switchScreen('setup');
+            setupStatus.classList.add('hidden');
+            document.getElementById('csvUrl').value = '';
+            aiGeneratedQuestions = null;
+            const btnAI = document.getElementById('btnGenerateAI');
+            if(btnAI) btnAI.innerHTML = "✨ Racik Soal AI";
+            const statusAI = document.getElementById('aiStatusText');
+            if(statusAI) statusAI.classList.add('hidden');
+        });
+
+        function loadBuiltInDataAndStart(topicKey) {
+            const rawCsvText = daftarTopikSoal[topicKey] || defaultCSVData;
+            Papa.parse(rawCsvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    bankSoal = results.data;
+                    setTimeout(startGame, 500);
+                }
+            });
+        }
+
+        function startGame() {
+            if (bankSoal.length < 2) {
+                alert("Bank soal tidak mencukupi!");
+                return;
+            }
+            scoreA = 0;
+            scoreB = 0;
+            isGameOver = false;
+            
+            avatarSVG_A.style.animationPlayState = 'running';
+            avatarSVG_B.style.animationPlayState = 'running';
+            
+            avatarContainerA.classList.remove('win-anim', 'lose-anim');
+            avatarContainerB.classList.remove('win-anim', 'lose-anim');
+
+            updateRopeVisual();
+            switchScreen('arena');
+            nextQuestion('A');
+            nextQuestion('B');
+        }
+
+        function getRandomQuestion() {
+            const randomIndex = Math.floor(Math.random() * bankSoal.length);
+            return bankSoal[randomIndex];
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function nextQuestion(team) {
+            if (isGameOver) return;
+
+            const qData = getRandomQuestion();
+            const qTextEl = team === 'A' ? questionTextA : questionTextB;
+            const optionsContainer = team === 'A' ? optionsContainerA : optionsContainerB;
+            
+            qTextEl.textContent = qData['Pertanyaan'];
+            optionsContainer.innerHTML = '';
+
+            let options = [
+                { text: qData['Opsi A'], isCorrect: qData['Opsi A'] === qData['Jawaban Benar'] },
+                { text: qData['Opsi B'], isCorrect: qData['Opsi B'] === qData['Jawaban Benar'] },
+                { text: qData['Opsi C'], isCorrect: qData['Opsi C'] === qData['Jawaban Benar'] },
+                { text: qData['Opsi D'], isCorrect: qData['Opsi D'] === qData['Jawaban Benar'] }
+            ];
+            
+            options = shuffleArray(options.filter(opt => opt.text !== undefined && opt.text.trim() !== ""));
+
+            const btnColorClass = team === 'A' ? 'bg-red-50 hover:bg-red-100 text-red-900 border-red-200' : 'bg-blue-50 hover:bg-blue-100 text-blue-900 border-blue-200';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = `w-full h-full flex items-center justify-center text-center p-1 sm:p-2 rounded-lg border-2 transition-all font-bold text-[10px] sm:text-xs md:text-sm active:scale-95 shadow-sm leading-tight ${btnColorClass}`;
+                btn.textContent = opt.text;
+                btn.onclick = () => handleAnswer(team, opt.isCorrect, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(team, isCorrect, btnElement) {
+            if (isGameOver) return;
+
+            const feedbackEl = team === 'A' ? feedbackA : feedbackB;
+            const container = team === 'A' ? optionsContainerA : optionsContainerB;
+            const avatar = team === 'A' ? avatarContainerA : avatarContainerB;
+
+            Array.from(container.children).forEach(btn => btn.disabled = true);
+
+            feedbackEl.classList.remove('opacity-0');
+            
+            if (isCorrect) {
+                if (team === 'A') scoreA++;
+                else scoreB++;
+                
+                btnElement.classList.add('bg-green-500', 'text-white', 'border-green-600');
+                btnElement.classList.remove('bg-red-50', 'bg-blue-50', 'hover:bg-red-100', 'hover:bg-blue-100');
+                feedbackEl.textContent = "✅ BENAR";
+                feedbackEl.classList.add('text-green-600', 'bg-green-100');
+                feedbackEl.classList.remove('text-red-600', 'bg-red-100', 'bg-gray-100');
+                
+                avatar.classList.add('pull-anim');
+                setTimeout(() => avatar.classList.remove('pull-anim'), 500);
+
+            } else {
+                btnElement.classList.add('bg-red-500', 'text-white', 'border-red-600');
+                btnElement.classList.remove('bg-red-50', 'bg-blue-50', 'hover:bg-red-100', 'hover:bg-blue-100');
+                feedbackEl.textContent = "❌ SALAH";
+                feedbackEl.classList.add('text-red-600', 'bg-red-100');
+                feedbackEl.classList.remove('text-green-600', 'bg-green-100', 'bg-gray-100');
+
+                avatar.classList.add('shake-anim');
+                setTimeout(() => avatar.classList.remove('shake-anim'), 400);
+            }
+
+            updateRopeVisual();
+            checkWinCondition();
+
+            setTimeout(() => {
+                feedbackEl.classList.add('opacity-0');
+                feedbackEl.className = 'font-bold text-xs sm:text-sm transition-opacity duration-300 opacity-0 bg-gray-100 px-2 rounded';
+                if (!isGameOver) nextQuestion(team);
+            }, 800);
+        }
+
+        function updateRopeVisual() {
+            scoreDisplayA.textContent = `Skor: ${scoreA}`;
+            scoreDisplayB.textContent = `Skor: ${scoreB}`;
+
+            const scoreDiff = scoreB - scoreA; 
+            let percentage = 50 + (scoreDiff / targetWinScore) * 35;
+            percentage = Math.max(15, Math.min(85, percentage));
+            ribbonElement.style.left = `${percentage}%`;
+            
+            const movePercent = (scoreDiff / targetWinScore) * 15; 
+            avatarContainerA.style.transform = `translate(calc(-50% + ${movePercent}vw), -50%)`;
+            avatarContainerB.style.transform = `translate(calc(50% + ${movePercent}vw), -50%) scaleX(-1)`;
+        }
+
+        function checkWinCondition() {
+            const scoreDiff = scoreA - scoreB;
+            if (scoreDiff >= targetWinScore) {
+                endGame('A');
+            } else if (scoreDiff <= -targetWinScore) {
+                endGame('B');
+            }
+        }
+
+        function endGame(winnerTeam) {
+            isGameOver = true;
+            avatarSVG_A.style.animationPlayState = 'paused';
+            avatarSVG_B.style.animationPlayState = 'paused';
+            
+            const winnerText = document.getElementById('winnerText');
+            const resultCard = document.getElementById('resultCard');
+            
+            document.getElementById('finalScoreA').textContent = scoreA;
+            document.getElementById('finalScoreB').textContent = scoreB;
+
+            resultCard.classList.remove('border-red-500', 'border-blue-500');
+
+            if (winnerTeam === 'A') {
+                winnerText.textContent = "TIM MERAH MENANG!";
+                winnerText.className = "text-3xl sm:text-4xl font-black mb-1 text-red-600";
+                resultCard.classList.add('border-red-500');
+                avatarContainerA.classList.add('win-anim');
+                avatarContainerB.classList.add('lose-anim');
+            } else {
+                winnerText.textContent = "TIM BIRU MENANG!";
+                winnerText.className = "text-3xl sm:text-4xl font-black mb-1 text-blue-600";
+                resultCard.classList.add('border-blue-500');
+                avatarContainerB.classList.add('win-anim');
+                avatarContainerA.classList.add('lose-anim');
+            }
+            
+            const commentaryBox = document.getElementById('aiCommentaryBox');
+            if (commentaryBox) {
+                commentaryBox.classList.add('hidden');
+                commentaryBox.innerHTML = '';
+                const btnAI = document.getElementById('btnAICommentary');
+                btnAI.disabled = false;
+                btnAI.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Komentator AI (Gemini)`;
+                btnAI.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            setTimeout(() => {
+                switchScreen('result');
+            }, 1200);
+        }
+
+        // ==========================================
+        // ✨ LOGIKA PEMANGGILAN AI VIA SERVER APPS SCRIPT
+        // ==========================================
+        
+        async function fetchGeminiWithRetry(prompt, isJson = false) {
+            return new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(function(response) {
+                        try {
+                            if (isJson && typeof response === 'string') {
+                                resolve(JSON.parse(response));
+                            } else {
+                                resolve(response);
+                            }
+                        } catch (e) {
+                            reject(new Error("Gagal mengurai respons dari server AI."));
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        reject(new Error(error.message));
+                    })
+                    .panggilGeminiDariServer(prompt, isJson);
+            });
+        }
+
+        const btnGenerateAI = document.getElementById('btnGenerateAI');
+        const aiTopicInput = document.getElementById('aiTopic');
+        const aiTingkatInput = document.getElementById('aiTingkat');
+        const aiJumlahInput = document.getElementById('aiJumlah');
+        const aiStatusText = document.getElementById('aiStatusText');
+        const csvUrlInput = document.getElementById('csvUrl');
+
+        if (btnGenerateAI) {
+            btnGenerateAI.addEventListener('click', async () => {
+                const topic = aiTopicInput.value.trim();
+                const tingkat = aiTingkatInput.value;
+                const jumlah = aiJumlahInput.value || 15;
+
+                if (!topic) {
+                    alert("Tuliskan topiknya dulu ya, misalnya: 'Pancasila'");
+                    return;
+                }
+
+                btnGenerateAI.disabled = true;
+                btnGenerateAI.innerHTML = "Meracik... ⏳";
+                aiStatusText.classList.remove('hidden', 'text-red-600');
+                aiStatusText.classList.add('text-purple-600');
+                aiStatusText.textContent = `AI sedang menyusun ${jumlah} soal tentang "${topic}"... 🪄`;
+                csvUrlInput.value = ""; 
+                aiGeneratedQuestions = null;
+
+                const prompt = `Buatkan ${jumlah} soal pilihan ganda tentang topik: "${topic}" untuk target peserta usia/tingkat: "${tingkat}". Buat soalnya menarik, mendidik, dan bervariasi tingkat kesulitannya. Berikan 4 opsi jawaban (A, B, C, D) dan tunjukkan mana Jawaban Benar. Pastikan teks Jawaban Benar sama persis (case-sensitive) dengan salah satu teks di Opsi.`;
+
+                try {
+                    const questions = await fetchGeminiWithRetry(prompt, true);
+                    if (questions && questions.length > 0) {
+                        aiGeneratedQuestions = questions;
+                        aiStatusText.textContent = `✅ Mantap! ${questions.length} soal AI siap digunakan. Langsung klik "MULAI PERMAINAN"!`;
+                        aiStatusText.classList.remove('text-purple-600', 'text-red-600');
+                        aiStatusText.classList.add('text-green-600');
+                        btnGenerateAI.innerHTML = "✨ Buat Ulang";
+                    } else {
+                        throw new Error("Format gagal diproses");
+                    }
+                } catch (error) {
+                    let userFriendlyMsg = error.message;
+                    if (error.message.includes("400") || error.message.toLowerCase().includes("not valid")) {
+                        userFriendlyMsg = `Kunci API yang Anda masukkan di file <b>Code.gs</b> ditolak oleh Google (Tidak Valid).<br><br><b>Solusi:</b><br>1. Buat kunci baru berawalan <code>AIzaSy</code> di Google AI Studio.<br>2. Buka file <b>Code.gs</b> di Apps Script.<br>3. Ganti tulisan kunci lama dengan kunci yang baru.<br>4. Simpan & Deploy ulang.`;
+                    } else if (error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("waitlist") || error.message.toLowerCase().includes("not found")) {
+                        userFriendlyMsg = `Kunci API kedaluwarsa atau ditolak Google. Silakan buat kunci baru di Google AI Studio dengan akun Gmail lain yang lebih bersih.`;
+                    }
+                    aiStatusText.innerHTML = `❌ <strong>Error:</strong><br>${userFriendlyMsg}`;
+                    aiStatusText.classList.remove('text-purple-600', 'text-green-600');
+                    aiStatusText.classList.add('text-red-600');
+                    btnGenerateAI.innerHTML = "✨ Coba Lagi";
+                } finally {
+                    btnGenerateAI.disabled = false;
+                }
+            });
+        }
+
+        const btnAICommentary = document.getElementById('btnAICommentary');
+        const aiCommentaryBox = document.getElementById('aiCommentaryBox');
+
+        if (btnAICommentary) {
+            btnAICommentary.addEventListener('click', async () => {
+
+                btnAICommentary.disabled = true;
+                btnAICommentary.innerHTML = "Menghubungi Bung AI... 🎙️";
+                btnAICommentary.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                aiCommentaryBox.classList.remove('hidden');
+                aiCommentaryBox.innerHTML = "<span class='animate-pulse'>Menganalisis hasil sengit pertandingan tadi... ⏳</span>";
+
+                const winningTeam = scoreA > scoreB ? "Tim Merah" : "Tim Biru";
+                const losingTeam = scoreA > scoreB ? "Tim Biru" : "Tim Merah";
+                const aiTopic = aiTopicInput.value.trim() ? ` pada materi ${aiTopicInput.value.trim()}` : "";
+                
+                const prompt = `Lomba adu cepat Tarik Tambang Pintar${aiTopic} baru saja selesai! 
+                Pemenangnya adalah ${winningTeam} yang mengalahkan ${losingTeam} dengan skor ${Math.max(scoreA, scoreB)} vs ${Math.min(scoreA, scoreB)}. 
+                Bererpanlah sebagai komentator lomba 17 Agustusan yang kocak khas bapak-bapak RT. 
+                Berikan komentar (maksimal 3 kalimat pendek) tentang kemenangan ini. Jangan gunakan markdown seperti asterisk.`;
+
+                try {
+                    const commentary = await fetchGeminiWithRetry(prompt, false);
+                    aiCommentaryBox.innerHTML = `🎙️ "${commentary}"`;
+                } catch (error) {
+                    let userFriendlyMsg = error.message;
+                    if (error.message.includes("400") || error.message.toLowerCase().includes("not valid")) {
+                        userFriendlyMsg = `Kunci API di <b>Code.gs</b> tidak valid.`;
+                    }
+                    aiCommentaryBox.innerHTML = `❌ Error: ${userFriendlyMsg}`;
+                } finally {
+                    btnAICommentary.disabled = false;
+                    btnAICommentary.innerHTML = "✨ Panggil Lagi";
+                    btnAICommentary.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
