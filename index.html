@@ -50,6 +50,7 @@
             }
         }
         
+        /* ============ ARENA STYLES ============ */
         .rope-container { position: relative; width: 100%; background-color: #87CEEB; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -5px 15px rgba(0,0,0,0.1); border-bottom: 6px solid #4ade80; }
         .rope { position: absolute; width: 120%; height: 2vh; background-color: #d97706; border-top: 3px solid #f59e0b; border-bottom: 3px solid #b45309; z-index: 10; top: 65%; transform: translateY(-50%); transition: transform 0.3s ease-in-out; }
         .rope::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.15) 5px, rgba(0,0,0,0.15) 10px); }
@@ -312,8 +313,20 @@
             <span class="font-bold hidden sm:block text-xs sm:text-sm">Layar Penuh</span>
         </button>
 
-        <!-- SETUP SCREEN -->
-        <section id="screen-setup" class="screen-setup-modern h-full w-full flex flex-col relative">
+        <!-- ================= LAYAR PEMBUKA (WELCOME SCREEN) ================= -->
+        <section id="screen-welcome" class="h-full w-full relative overflow-hidden flex items-center justify-center">
+            <!-- Background Image -->
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('bg.jpg'); background-color: #87CEEB;"></div>
+            
+            <!-- Tombol Transparan Tepat di Atas Tulisan "MULAI" -->
+            <!-- Catatan: Jika tombol meleset, sesuaikan nilai bottom, width, dan height di bawah -->
+            <button id="btnStartWelcome" class="absolute z-20 cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10" style="bottom: 11%; left: 50%; transform: translateX(-50%); width: 30%; height: 14%; border-radius: 50px;">
+                <div class="absolute inset-0 rounded-[50px] border-4 border-white/0 hover:border-white/50 animate-pulse"></div>
+            </button>
+        </section>
+
+        <!-- ================= LAYAR SETUP (DARK PREMIUM) ================= -->
+        <section id="screen-setup" class="hidden screen-setup-modern h-full w-full flex flex-col relative">
             <div class="setup-bg pointer-events-none" aria-hidden="true">
                 <div class="bg-mesh"></div>
                 <div class="orb orb-1"></div>
@@ -327,13 +340,12 @@
                     <div class="text-center mb-4 sm:mb-5">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 backdrop-blur border border-white/10 text-[10px] sm:text-xs font-semibold text-emerald-300 mb-3">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            GAME EDUKATIF INTERAKTIF
+                            PENGATURAN PERMAINAN
                         </div>
                         <h1 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight leading-none mb-2">
                             <span class="bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">Tarik Tambang</span>
                             <span class="text-white"> Edukatif</span>
                         </h1>
-                        <p class="text-white/60 text-xs sm:text-sm max-w-lg mx-auto">Adu cepat jawab soal sambil tarik tambang seru bersama teman!</p>
                     </div>
                     
                     <div class="glass-card">
@@ -420,6 +432,11 @@
                             <button id="btnStartSetup" class="btn-start w-full font-black py-3 sm:py-4 px-6 rounded-xl text-base sm:text-lg uppercase tracking-wider">
                                 🚀 Mulai Permainan
                             </button>
+
+                            <!-- Tombol Kembali ke Layar Awal -->
+                            <button id="btnBackToWelcome" class="w-full text-white/50 hover:text-white/80 text-xs font-semibold py-2 transition-colors">
+                                ⬅ Kembali ke Menu Utama
+                            </button>
                         </div>
                         
                         <div id="setupStatus" class="mt-3 text-center text-xs font-bold text-emerald-300 hidden">Memuat soal...</div>
@@ -432,7 +449,7 @@
             </div>
         </section>
 
-        <!-- ARENA -->
+        <!-- ================= ARENA ================= -->
         <section id="screen-arena" class="hidden h-full w-full flex-col bg-white">
             <div class="rope-container h-[40%] shrink-0" id="arenaContainer">
                 <svg class="absolute inset-0 w-full h-full object-cover z-0" preserveAspectRatio="none" viewBox="0 0 800 300">
@@ -502,7 +519,7 @@
             </div>
         </section>
 
-        <!-- RESULT -->
+        <!-- ================= RESULT ================= -->
         <section id="screen-result" class="hidden h-full w-full flex-col items-center justify-center bg-white p-8 relative">
             <div class="absolute inset-0 z-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, #4ade80 0, #4ade80 2px, transparent 2px, transparent 10px);"></div>
             
@@ -542,6 +559,62 @@
     </div>
 
     <script>
+        // ==========================================
+        // LOGIKA NAVIGASI LAYAR
+        // ==========================================
+        const screenWelcome = document.getElementById('screen-welcome');
+        const screenSetup = document.getElementById('screen-setup');
+        const screenArena = document.getElementById('screen-arena');
+        const screenResult = document.getElementById('screen-result');
+        
+        const btnStartWelcome = document.getElementById('btnStartWelcome');
+        const btnBackToWelcome = document.getElementById('btnBackToWelcome');
+        
+        const btnStartSetup = document.getElementById('btnStartSetup');
+        const btnRestart = document.getElementById('btnRestart');
+        const setupStatus = document.getElementById('setupStatus');
+
+        function switchScreen(screenToShow) {
+            // Sembunyikan semua layar
+            screenWelcome.classList.add('hidden');
+            screenWelcome.classList.remove('flex');
+            
+            screenSetup.classList.add('hidden');
+            
+            screenArena.classList.add('hidden');
+            screenArena.classList.remove('flex');
+            
+            screenResult.classList.add('hidden');
+            screenResult.classList.remove('flex');
+
+            // Tampilkan layar yang dipilih
+            if(screenToShow === 'welcome') {
+                screenWelcome.classList.remove('hidden');
+                screenWelcome.classList.add('flex');
+            } else if(screenToShow === 'setup') {
+                screenSetup.classList.remove('hidden');
+            } else if(screenToShow === 'arena') {
+                screenArena.classList.remove('hidden');
+                screenArena.classList.add('flex');
+            } else if (screenToShow === 'result') {
+                screenResult.classList.remove('hidden');
+                screenResult.classList.add('flex');
+            }
+        }
+
+        // Tombol di Gambar Welcome
+        btnStartWelcome.addEventListener('click', () => {
+            switchScreen('setup');
+        });
+
+        // Tombol Kembali dari Setup ke Welcome
+        btnBackToWelcome.addEventListener('click', () => {
+            switchScreen('welcome');
+        });
+
+        // ==========================================
+        // LOGIKA SUMBER SOAL
+        // ==========================================
         const sourceRadios = document.querySelectorAll('input[name="sourceType"]');
         const sections = {
             builtin: document.getElementById('section-builtin'),
@@ -561,6 +634,9 @@
             });
         });
 
+        // ==========================================
+        // LOGIKA FULLSCREEN
+        // ==========================================
         const btnFullscreen = document.getElementById('btnFullscreen');
 
         btnFullscreen.addEventListener('click', () => {
@@ -592,6 +668,9 @@
             }
         });
 
+        // ==========================================
+        // DATA SOAL BAWAAN
+        // ==========================================
         const defaultCSVData = `Pertanyaan,Opsi A,Opsi B,Opsi C,Opsi D,Jawaban Benar
 Berapakah hasil dari 7 x 8?,54,56,64,48,56
 Ibukota negara Indonesia adalah?,Bandung,Surabaya,Jakarta,Medan,Jakarta
@@ -735,19 +814,15 @@ Suku bangsa yang terkenal dengan rumah adat Gadang adalah suku?,Jawa,Sunda,Minan
 Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawan Solo,Sungai Brantas,Bengawan Solo`
         };
 
+        // ==========================================
+        // LOGIKA GAME
+        // ==========================================
         let bankSoal = [];
         let scoreA = 0;
         let scoreB = 0;
         let targetWinScore = 5;
         let isGameOver = false;
         let aiGeneratedQuestions = null;
-
-        const screenSetup = document.getElementById('screen-setup');
-        const screenArena = document.getElementById('screen-arena');
-        const screenResult = document.getElementById('screen-result');
-        const btnStartSetup = document.getElementById('btnStartSetup');
-        const btnRestart = document.getElementById('btnRestart');
-        const setupStatus = document.getElementById('setupStatus');
 
         const ribbonElement = document.getElementById('ribbonElement');
         const scoreDisplayA = document.getElementById('scoreDisplayA');
@@ -764,24 +839,6 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
         const feedbackB = document.getElementById('feedbackB');
         const avatarContainerB = document.getElementById('avatarContainerB');
         const avatarSVG_B = document.getElementById('avatarB');
-
-        function switchScreen(screenToShow) {
-            screenSetup.classList.add('hidden');
-            screenArena.classList.add('hidden');
-            screenArena.classList.remove('flex');
-            screenResult.classList.add('hidden');
-            screenResult.classList.remove('flex');
-
-            if(screenToShow === 'arena') {
-                screenArena.classList.remove('hidden');
-                screenArena.classList.add('flex');
-            } else if (screenToShow === 'result') {
-                screenResult.classList.remove('hidden');
-                screenResult.classList.add('flex');
-            } else {
-                document.getElementById('screen-' + screenToShow).classList.remove('hidden');
-            }
-        }
 
         function getCsvExportUrl(url) {
             if (url.includes('export?format=csv') || url.endsWith('.csv')) {
@@ -848,7 +905,7 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
         });
 
         btnRestart.addEventListener('click', () => {
-            switchScreen('setup');
+            switchScreen('welcome');
             setupStatus.classList.add('hidden');
             document.getElementById('csvUrl').value = '';
             aiGeneratedQuestions = null;
@@ -1045,7 +1102,7 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
         }
 
         // ==========================================
-        // ✨ PEMANGGILAN AI VIA APPS SCRIPT WEB APP
+        // LOGIKA AI (FETCH APPS SCRIPT)
         // ==========================================
         // ⚠️ GANTI URL DI BAWAH DENGAN URL DEPLOY APPS SCRIPT ANDA!
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8PZVC_r1uHSQPypkt-YUGs0y7u56nnBC92iCDWtItBPdwtlpTXbFg9pQf3cbDEXY/exec";
