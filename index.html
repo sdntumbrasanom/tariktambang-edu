@@ -53,8 +53,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            /* KUNCI UTAMA: Sesuaikan rasio ini dengan gambar Anda (misal 16/9 atau 3/2) */
-            aspect-ratio: 16 / 9; 
+            aspect-ratio: 3 / 2; 
             width: 100vw;
             min-height: 100vh;
         }
@@ -300,6 +299,30 @@
             padding: 10px;
         }
 
+        /* Checkbox C1-C6 */
+        .check-c1-c6 {
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .check-c1-c6:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        input[type="checkbox"]:checked + .check-c1-c6 {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: #a855f7;
+            color: #d8b4fe;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
         .btn-ai {
             background: linear-gradient(135deg, #a855f7, #7c3aed);
             color: #fff;
@@ -515,12 +538,14 @@
                             <div id="section-sheets" class="source-section hidden section-inner border-l-4 border-blue-500">
                                 <label class="block text-[10px] sm:text-xs font-bold text-blue-300 mb-2 uppercase tracking-wider">🔗 Link Google Sheets</label>
                                 <input type="text" id="csvUrl" placeholder="Tempel link Google Sheets Anda di sini..." class="modern-input text-sm mb-3">
-                                <div class="flex flex-col sm:flex-row items-center gap-2">
-                                    <a href="https://docs.google.com/spreadsheets/d/10YdkL93c9iIFD8QxY4o1wkyEBy8aVcPSvzvCAFXeFzs/copy" target="_blank" class="btn-template w-full py-2 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-2 shrink-0">
+                                
+                                <!-- PERBAIKAN LAYOUT SHEETS -->
+                                <div class="flex flex-col gap-2">
+                                    <a href="https://docs.google.com/spreadsheets/d/10YdkL93c9iIFD8QxY4o1wkyEBy8aVcPSvzvCAFXeFzs/copy" target="_blank" class="btn-template w-full py-2 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                                         Buat Salin Template (Make a Copy)
                                     </a>
-                                    <p class="text-[10px] text-blue-300/70 text-center sm:text-left leading-tight">Cukup tempel link Sheets biasa. Pastikan Sheet di-share <b>"Siapa saja yang memiliki link"</b>.</p>
+                                    <p class="text-[10px] text-blue-300/70 text-center leading-tight">Cukup tempel link Sheets biasa. Pastikan Sheet di-share <b>"Siapa saja yang memiliki link"</b>.</p>
                                 </div>
                             </div>
                             
@@ -540,7 +565,39 @@
                                         
                                         <input type="number" id="aiJumlah" value="10" min="5" max="30" class="modern-input text-sm font-bold text-center" placeholder="Jumlah">
                                     </div>
-                                    <button type="button" id="btnGenerateAI" class="btn-ai w-full font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2">
+
+                                    <!-- CHECKBOX C1 - C6 -->
+                                    <div>
+                                        <label class="block text-[10px] sm:text-xs font-bold text-purple-300 mb-2 uppercase tracking-wider">🧠 Tingkat Kognitif (Taksonomi Bloom)</label>
+                                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                                            <label>
+                                                <input type="checkbox" name="aiLevel" value="C1 (Mengingat)" class="sr-only" checked>
+                                                <div class="check-c1-c6">C1 (Mengingat)</div>
+                                            </label>
+                                            <label>
+                                                <input type="checkbox" name="aiLevel" value="C2 (Memahami)" class="sr-only" checked>
+                                                <div class="check-c1-c6">C2 (Memahami)</div>
+                                            </label>
+                                            <label>
+                                                <input type="checkbox" name="aiLevel" value="C3 (Menerapkan)" class="sr-only" checked>
+                                                <div class="check-c1-c6">C3 (Menerapkan)</div>
+                                            </label>
+                                            <label>
+                                                <input type="checkbox" name="aiLevel" value="C4 (Menganalisis)" class="sr-only">
+                                                <div class="check-c1-c6">C4 (Menganalisis)</div>
+                                            </label>
+                                            <label>
+                                                <input type="checkbox" name="aiLevel" value="C5 (Mengevaluasi)" class="sr-only">
+                                                <div class="check-c1-c6">C5 (Mengevaluasi)</div>
+                                            </label>
+                                            <label>
+                                                <input type="checkbox" name="aiLevel" value="C6 (Mencipta)" class="sr-only">
+                                                <div class="check-c1-c6">C6 (Mencipta)</div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" id="btnGenerateAI" class="btn-ai w-full font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 mt-1">
                                         <span>✨ Buat Soal</span>
                                     </button>
                                     <p id="aiStatusText" class="text-[11px] font-bold hidden text-center bg-black/30 border border-white/10 p-2 rounded-lg text-purple-300">Buat soal... ⏳</p>
@@ -1246,9 +1303,16 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
                 const topic = aiTopicInput.value.trim();
                 const tingkat = aiTingkatInput.value;
                 const jumlah = aiJumlahInput.value || 15;
+                
+                // Ambil level kognitif yang dicentang
+                const selectedLevels = Array.from(document.querySelectorAll('input[name="aiLevel"]:checked')).map(cb => cb.value);
 
                 if (!topic) {
                     alert("Tuliskan topiknya dulu ya, misalnya: 'Pancasila'");
+                    return;
+                }
+                if (selectedLevels.length === 0) {
+                    alert("Pilih minimal satu Tingkat Kognitif (C1-C6)!");
                     return;
                 }
 
@@ -1260,7 +1324,8 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
                 csvUrlInput.value = ""; 
                 aiGeneratedQuestions = null;
 
-                const prompt = `Buatkan ${jumlah} soal pilihan ganda tentang topik: "${topic}" yang disesuaikan dengan target: "${tingkat}" (Kurikulum Merdeka). Buat soalnya menarik, mendidik, dan bervariasi tingkat kesulitannya. Berikan 4 opsi jawaban (A, B, C, D) dan tunjukkan mana Jawaban Benar. Pastikan teks Jawaban Benar sama persis (case-sensitive) dengan salah satu teks di Opsi.`;
+                const levelString = selectedLevels.join(', ');
+                const prompt = `Buatkan ${jumlah} soal pilihan ganda tentang topik: "${topic}". Target peserta: ${tingkat} (Kurikulum Merdeka). Fokuskan soal pada tingkatan kognitif Taksonomi Bloom berikut: ${levelString}. Pastikan soalnya mendidik, bervariasi, dan sesuai dengan tingkat kesulitan tersebut. Berikan 4 opsi jawaban (A, B, C, D) dan tunjukkan mana Jawaban Benar. Pastikan teks Jawaban Benar sama persis (case-sensitive) dengan salah satu teks di Opsi.`;
 
                 try {
                     const questions = await fetchGeminiWithRetry(prompt, true);
