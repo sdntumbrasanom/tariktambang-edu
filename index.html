@@ -12,25 +12,18 @@
             font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #111827;
             margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
             overflow: hidden;
         }
         
         .game-container {
             width: 100vw;
-            height: 56.25vw;
-            max-height: 100vh;
-            max-width: 177.78vh;
+            height: 100vh;
             margin: auto;
             background-color: #f0fdf4;
             position: relative;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
 
         #portrait-warning { display: none; }
@@ -384,6 +377,7 @@
 
         <!-- ================= LAYAR PEMBUKA ================= -->
         <section id="screen-welcome" class="h-full w-full relative overflow-hidden flex items-center justify-center">
+            <!-- Background Image -->
             <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('bg.jpg'); background-color: #87CEEB;"></div>
             
             <button id="btnStartWelcome" class="absolute z-20 cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10" style="bottom: 11%; left: 50%; transform: translateX(-50%); width: 30%; height: 14%; border-radius: 50px;">
