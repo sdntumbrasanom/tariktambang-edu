@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tarik Tambang Edukatif</title>
+    <title>Tarik Tambang Edu</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -93,9 +93,23 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
-        /* ============ SETUP SCREEN — DARK NEON GLOW ============ */
+        /* ============ SETUP SCREEN — DARK NEON GLOW + BG IMAGE ============ */
         .screen-setup-modern {
-            background: #09090b; /* Latar sangat gelap */
+            background: #09090b;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Gambar bg.jpg jadi latar belakang yang samar (blur + gelap) */
+        .screen-setup-modern::before {
+            content: '';
+            position: absolute;
+            inset: -30px;
+            background-image: url('bg.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px) brightness(0.28) saturate(0.85);
+            z-index: 0;
         }
 
         .setup-bg {
@@ -105,7 +119,6 @@
             z-index: 0;
         }
 
-        /* Efek Grid & Cahaya Latar */
         .bg-grid {
             position: absolute;
             inset: 0;
@@ -132,9 +145,8 @@
             66% { transform: translate(-40px, 40px) scale(0.9); }
         }
 
-        /* Card Kaca dengan efek Glow */
         .glass-card {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -149,7 +161,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Kartu Sumber Soal */
         .source-card {
             padding: 12px 10px;
             border-radius: 16px;
@@ -166,7 +177,6 @@
             transform: translateY(-2px);
         }
         
-        /* Efek Glow Sesuai Radio Yang Dipilih */
         input[value="builtin"]:checked + .source-card {
             background: rgba(16, 185, 129, 0.1);
             border-color: #10b981;
@@ -186,12 +196,11 @@
         .section-inner {
             padding: 16px;
             border-radius: 16px;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.25);
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
 
-        /* Input Modern */
         .modern-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -214,7 +223,6 @@
             padding: 10px;
         }
 
-        /* Tombol */
         .btn-ai {
             background: linear-gradient(135deg, #a855f7, #7c3aed);
             color: #fff;
@@ -252,7 +260,6 @@
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
         }
 
-        /* Tombol Link Template */
         .btn-template {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid #3b82f6;
@@ -325,25 +332,22 @@
 
     <div class="game-container" id="appContainer">
         
-        <!-- TOMBOL FULLSCREEN (Hanya Ikon, di Atas Kanan) -->
         <button id="btnFullscreen" class="absolute top-2 right-2 bg-black/40 hover:bg-black/70 backdrop-blur text-white p-2 rounded-lg shadow-lg transition-all z-[100] border border-white/20" title="Layar Penuh">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
             </svg>
         </button>
 
-        <!-- ================= LAYAR PEMBUKA (WELCOME SCREEN) ================= -->
+        <!-- ================= LAYAR PEMBUKA ================= -->
         <section id="screen-welcome" class="h-full w-full relative overflow-hidden flex items-center justify-center">
-            <!-- Background Image (Pastikan file bg.jpg ada di folder yang sama) -->
             <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('bg.jpg'); background-color: #87CEEB;"></div>
             
-            <!-- Tombol Transparan Tepat di Atas Tulisan "MULAI" -->
             <button id="btnStartWelcome" class="absolute z-20 cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10" style="bottom: 11%; left: 50%; transform: translateX(-50%); width: 30%; height: 14%; border-radius: 50px;">
                 <div class="absolute inset-0 rounded-[50px] border-4 border-white/0 hover:border-white/50 animate-pulse"></div>
             </button>
         </section>
 
-        <!-- ================= LAYAR SETUP (DARK NEON GLOW) ================= -->
+        <!-- ================= LAYAR SETUP ================= -->
         <section id="screen-setup" class="hidden screen-setup-modern h-full w-full flex flex-col relative">
             <div class="setup-bg pointer-events-none" aria-hidden="true">
                 <div class="bg-grid"></div>
@@ -368,7 +372,6 @@
                     
                     <div class="glass-card">
                         
-                        <!-- SUMBER SOAL -->
                         <div class="mb-5">
                             <label class="block text-[10px] sm:text-xs font-bold text-white/70 mb-3 tracking-wider uppercase">Pilih Sumber Soal</label>
                             <div class="grid grid-cols-3 gap-3 sm:gap-4">
@@ -398,7 +401,6 @@
                         
                         <div class="space-y-4">
                             
-                            <!-- SECTION BAWAAN -->
                             <div id="section-builtin" class="source-section block section-inner border-l-4 border-emerald-500">
                                 <label for="instantTopic" class="block text-[10px] sm:text-xs font-bold text-emerald-300 mb-2 uppercase tracking-wider">📖 Pilih Soal Siap Main</label>
                                 <select id="instantTopic" class="modern-input font-semibold text-sm">
@@ -414,7 +416,6 @@
                                 </select>
                             </div>
                             
-                            <!-- SECTION SHEETS -->
                             <div id="section-sheets" class="source-section hidden section-inner border-l-4 border-blue-500">
                                 <label class="block text-[10px] sm:text-xs font-bold text-blue-300 mb-2 uppercase tracking-wider">🔗 URL Google Sheets</label>
                                 <input type="text" id="csvUrl" placeholder="Tempel URL Sheet format CSV di sini..." class="modern-input text-sm mb-3">
@@ -427,13 +428,11 @@
                                 </div>
                             </div>
                             
-                            <!-- SECTION AI -->
                             <div id="section-ai" class="source-section hidden section-inner border-l-4 border-purple-500">
                                 <div class="flex flex-col gap-3">
                                     <div class="grid grid-cols-1 sm:grid-cols-6 gap-3">
                                         <input type="text" id="aiTopic" placeholder="Topik (contoh: Tata Surya)" class="modern-input sm:col-span-3 text-sm">
                                         
-                                        <!-- Opsi Kelas / Fase Kurikulum Merdeka -->
                                         <select id="aiTingkat" class="modern-input sm:col-span-2 text-sm font-medium">
                                             <option value="Fase A (SD Kelas 1-2)">Fase A (SD 1-2)</option>
                                             <option value="Fase B (SD Kelas 3-4)" selected>Fase B (SD 3-4)</option>
@@ -452,7 +451,6 @@
                                 </div>
                             </div>
                             
-                            <!-- TARGET POIN -->
                             <div>
                                 <label for="targetScore" class="block text-[10px] sm:text-xs font-bold text-white/70 mb-2 uppercase tracking-wider">🎯 Target Poin Kemenangan</label>
                                 <select id="targetScore" class="modern-input text-sm font-semibold">
@@ -464,7 +462,6 @@
                                 </select>
                             </div>
                             
-                            <!-- TOMBOL MULAI -->
                             <button id="btnStartSetup" class="btn-start w-full font-black py-3 sm:py-4 px-6 rounded-xl text-base sm:text-lg uppercase tracking-wider mt-2">
                                 🚀 Mulai Permainan
                             </button>
@@ -610,19 +607,14 @@
         const setupStatus = document.getElementById('setupStatus');
 
         function switchScreen(screenToShow) {
-            // Sembunyikan semua layar
             screenWelcome.classList.add('hidden');
             screenWelcome.classList.remove('flex');
-            
             screenSetup.classList.add('hidden');
-            
             screenArena.classList.add('hidden');
             screenArena.classList.remove('flex');
-            
             screenResult.classList.add('hidden');
             screenResult.classList.remove('flex');
 
-            // Tampilkan layar yang dipilih
             if(screenToShow === 'welcome') {
                 screenWelcome.classList.remove('hidden');
                 screenWelcome.classList.add('flex');
@@ -666,7 +658,6 @@
         // LOGIKA FULLSCREEN
         // ==========================================
         const btnFullscreen = document.getElementById('btnFullscreen');
-
         btnFullscreen.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 let fsPromise;
@@ -677,22 +668,15 @@
                 } else if (document.documentElement.msRequestFullscreen) {
                     fsPromise = document.documentElement.msRequestFullscreen();
                 }
-                
                 if (fsPromise !== undefined) {
                     fsPromise.then(() => {
                         if (screen.orientation && screen.orientation.lock) {
-                            screen.orientation.lock('landscape').catch(function(error) {
-                                console.log("Kunci orientasi tidak didukung", error);
-                            });
+                            screen.orientation.lock('landscape').catch(function(error) {});
                         }
-                    }).catch(error => {
-                        console.warn("Fullscreen diblokir");
-                    });
+                    }).catch(error => {});
                 }
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
             }
         });
 
@@ -1133,7 +1117,7 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
         // LOGIKA AI (FETCH APPS SCRIPT)
         // ==========================================
         // ⚠️ GANTI URL DI BAWAH DENGAN URL DEPLOY APPS SCRIPT ANDA!
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8PZVC_r1uHSQPypkt-YUGs0y7u56nnBC92iCDWtItBPdwtlpTXbFg9pQf3cbDEXY/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/XXXXX/exec";
 
         async function fetchGeminiWithRetry(prompt, isJson = false) {
             const res = await fetch(APPS_SCRIPT_URL, {
@@ -1183,7 +1167,6 @@ Sungai terpanjang di pulau Jawa adalah sungai?,Sungai Musi,Sungai Kapuas,Bengawa
                 csvUrlInput.value = ""; 
                 aiGeneratedQuestions = null;
 
-                // Prompt disesuaikan untuk Kurikulum Merdeka (Fase)
                 const prompt = `Buatkan ${jumlah} soal pilihan ganda tentang topik: "${topic}" yang disesuaikan dengan target: "${tingkat}" (Kurikulum Merdeka). Buat soalnya menarik, mendidik, dan bervariasi tingkat kesulitannya. Berikan 4 opsi jawaban (A, B, C, D) dan tunjukkan mana Jawaban Benar. Pastikan teks Jawaban Benar sama persis (case-sensitive) dengan salah satu teks di Opsi.`;
 
                 try {
